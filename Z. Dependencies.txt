@@ -1,0 +1,9 @@
+npm install firebase
+
+npm i moment
+
+
+shadcn ui alert message component
+
+
+// NOTE you click the to do note to UPDATE/EDIT
