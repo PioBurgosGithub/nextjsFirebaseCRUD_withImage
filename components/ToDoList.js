@@ -24,12 +24,22 @@ const ToDoList = () => {
 
     return (
     <div>
-        {todos.map(todo=> <ToDo key={todo.id}
-            id={todo.id}
-            title={todo.title}
-            detail={todo.detail}
-            timestamp={todo.timestamp}
-        />)}
+        {todos.map(todo => (
+            <div key={todo.id}>
+                <ToDo 
+                    id={todo.id}
+                    title={todo.title}
+                    detail={todo.detail}
+                    timestamp={todo.timestamp}
+                />
+
+                {/* Display Multiple Images */}
+                {Array.isArray(todo.imageUrl) ? todo.imageUrl.map((url, index) => (
+                    <img className='w-[300px] my-4' key={index} src={url} alt={`${todo.title}-${index}`} />
+                )) : <img className='w-[300px] my-2.5' src={todo.imageUrl} alt={todo.title} />}
+
+            </div>
+        ))}
     </div>
   )
 }

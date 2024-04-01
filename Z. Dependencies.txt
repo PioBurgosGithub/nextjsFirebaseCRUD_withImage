@@ -7,3 +7,6 @@ shadcn ui alert message component
 
 
 // NOTE you click the to do note to UPDATE/EDIT
+
+npm i uuid
+
