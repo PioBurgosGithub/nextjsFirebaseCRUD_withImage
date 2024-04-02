@@ -1,0 +1,18 @@
+
+NextJS Firebase v9 Create Crud Application with Material UI
+https://www.youtube.com/playlist?list=PLC5vixW_4xSLMHIUVqOchxN8QHGhAttag
+
+
+Upload Images / Files to Firebase In React - Firebase V9 File Upload Tutorial
+https://www.youtube.com/watch?v=YOAeBSCkArA
+
+
+How to Get and Store Text and Image in Firebase in React Js || Firebase Database || Firebase Storage
+https://www.youtube.com/watch?v=PkioTiY3u1A
+
+	
+Upload files with Cloud Storage on Web
+https://firebase.google.com/docs/storage/web/upload-files
+
+Delete files with Cloud Storage on Web 
+https://firebase.google.com/docs/storage/web/delete-files

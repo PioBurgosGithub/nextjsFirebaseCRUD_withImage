@@ -23,25 +23,34 @@ const ToDoList = () => {
 
 
     return (
-    <div>
-        {todos.map(todo => (
-            <div key={todo.id}>
-                <ToDo 
-                    id={todo.id}
-                    title={todo.title}
-                    detail={todo.detail}
-                    timestamp={todo.timestamp}
-                />
+        <div>
+            {todos.map(todo => (
+                <div key={todo.id}>
+                    <ToDo 
+                        id={todo.id}
+                        title={todo.title}
+                        detail={todo.detail}
+                        timestamp={todo.timestamp}
+                        imageUrl={todo.imageUrl}  // Pass imageUrl as a prop
+                    />
 
-                {/* Display Multiple Images */}
-                {Array.isArray(todo.imageUrl) ? todo.imageUrl.map((url, index) => (
-                    <img className='w-[300px] my-4' key={index} src={url} alt={`${todo.title}-${index}`} />
-                )) : <img className='w-[300px] my-2.5' src={todo.imageUrl} alt={todo.title} />}
+                    {/* Display Multiple Images */}
+                    {Array.isArray(todo.imageUrl) ? todo.imageUrl.map((url, index) => (
+                        <div key={index}>
+                            <img className='w-[300px] my-4' src={url} alt={`${todo.title}-${index}`} />
+                            {/*<p>{url}</p>*/}
+                        </div>
+                    )) : (
+                        <div>
+                            <img className='w-[300px] my-2.5' src={todo.imageUrl} alt={todo.title} />
+                            {/*<p>{todo.imageUrl}</p>*/}
+                        </div>
+                    )}
 
-            </div>
-        ))}
-    </div>
-  )
+                </div>
+            ))}
+        </div>
+    )
 }
 
 export default ToDoList

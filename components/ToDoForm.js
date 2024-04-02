@@ -18,10 +18,7 @@ const ToDoForm = () => {
 
     const uploadImage = async () => {
         if (imageUpload == null) return null;
-      /*  const imageRef = ref(storage, `images/${imageUpload.name + uuidv4()}`);
-        await uploadBytes(imageRef, imageUpload);
-        const url = await getDownloadURL(imageRef);
-        return url;*/
+     
 
         const urls = [];
         for (let i = 0; i < imageUpload.length; i++) {
@@ -54,11 +51,17 @@ const ToDoForm = () => {
 
     
     const onSubmit = async () => {
+        // update the todo
         if (todo?.hasOwnProperty('timestamp')) {
             // Call the uploadImage function here
             const imageUrl = await uploadImage();
             
-            // update the todo
+
+            /* Scenario
+            1. Update only the text(title and details).
+            2. Images from previous upload will no longer be present in the todo object. It will not display images  
+            3. imageUrl is Null
+            */
             const docRef = doc(db, "todos", todo.id);
             const todoUpdated = { ...todo, imageUrl, timestamp: serverTimestamp() }
             updateDoc(docRef, todoUpdated)
@@ -66,11 +69,11 @@ const ToDoForm = () => {
             showAlert('info', `Todo with ID: ${todo.id} is updated successfully!`);  
 
         } 
+        // add a new todo
         else{
             // Call the uploadImage function here
             const imageUrl = await uploadImage();
             
-            // add a new todo
             const collectionRef = collection(db, "todos")
             const docRef = await addDoc(collectionRef, { ...todo, imageUrl, timestamp: serverTimestamp() })
             setTodo({title:'', detail:''})
@@ -138,10 +141,13 @@ const ToDoForm = () => {
                         <img key={index} src={url} alt={`Saved image ${index}`} />
                     ))}
 
-                    {/* Display the image previews */}          
+                    {/* Display the image previews */} 
+                    
+                    { /*       
                     {imagePreviews.map((url, index) => (
                         <img key={index} src={url} alt={`Preview ${index}`} />
-                    ))}
+                    ))} */}
+
                 </div>
             </div>
             <Button onClick={onSubmit} sx={{ mt:3 }}> {todo.hasOwnProperty('timestamp') ? 'Update todo': ' Add a new Todo'}  </Button>
