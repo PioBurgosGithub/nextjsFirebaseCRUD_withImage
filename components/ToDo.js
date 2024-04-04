@@ -7,10 +7,12 @@ import { doc, deleteDoc } from "firebase/firestore"
 import { TodoContext } from '../app/TodoContext'
 import { db } from '../firebase'
 import { getStorage, ref, deleteObject } from "firebase/storage";
+import { useRouter } from 'next/navigation';
+
 
 const ToDo = ({id, timestamp, title, detail, imageUrl}) => {
   const {showAlert, setTodo} = useContext(TodoContext)
-
+  const router = useRouter();
 
   const storage = getStorage(); // Get the storage instance
   
@@ -43,7 +45,15 @@ const ToDo = ({id, timestamp, title, detail, imageUrl}) => {
         // Handle error if needed
     }
   }
+  
 
+
+  const seeMore = (id, e) => {
+    e.stopPropagation();
+    router.push(`/todos/${id}`);
+  }
+
+  
   return (
     <ListItem onClick={() => setTodo({id, title, detail, timestamp})}
       sx={{mt: 3, boxShadow: 3}}
@@ -54,7 +64,7 @@ const ToDo = ({id, timestamp, title, detail, imageUrl}) => {
             <DeleteIcon></DeleteIcon>
           </IconButton>
 
-          <IconButton>
+          <IconButton onClick={e => seeMore(id, e)} >
             <MoreVertIcon></MoreVertIcon>
           </IconButton>
         </>

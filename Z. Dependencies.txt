@@ -10,3 +10,6 @@ shadcn ui alert message component
 
 npm i uuid
 
+npm install -g firebase-tools
+firebase login
+firebase init

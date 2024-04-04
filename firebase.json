@@ -1,0 +1,26 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": " firestore.indexes.json"
+  },
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/todos/",
+        "destination": "/todos/[id].js"
+      }
+    ],
+    "frameworksBackend": {
+      "region": "asia-east1"
+    }
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
