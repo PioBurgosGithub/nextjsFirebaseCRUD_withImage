@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useContext, useRef, useEffect } from 'react'
 import { TextField, Button } from '@mui/material'
-import { addDoc, collection, serverTimestamp, updateDoc, doc } from 'firebase/firestore'
+import { addDoc, collection, serverTimestamp, updateDoc, doc, getDoc } from 'firebase/firestore'
 import {db} from '../firebase'
 import { TodoContext } from '../app/TodoContext'
 import { storage } from '../firebase'
@@ -52,21 +52,34 @@ const ToDoForm = () => {
     
     const onSubmit = async () => {
         // update the todo
+         /* Conditions
+            1. If imageUrl is not updated, keep the existing imageUrl
+            2. If imageUrl is updated, remove the old imageUrl from Firebase Storage
+            3. If no imageUrl is provided, set imageUrl to null
+        */
         if (todo?.hasOwnProperty('timestamp')) {
+            // Fetch imageUrl from Firestore
+            const docRef = doc(db, "todos", todo.id);
+            const docSnap = await getDoc(docRef);
+            const { imageUrl: existingImageUrl } = docSnap.data();
+
             // Call the uploadImage function here
             const imageUrl = await uploadImage();
-            
 
-            /* Scenario
-            1. Update only the text(title and details).
-            2. Images from previous upload will no longer be present in the todo object. It will not display images  
-            3. imageUrl is Null
-            */
-            const docRef = doc(db, "todos", todo.id);
+            
+            // Check if new images are uploaded
+            if (existingImageUrl && imageUrl && existingImageUrl !== imageUrl) {
+                // Remove old images from Firebase Storage
+                const storageRef = ref(storage, existingImageUrl);
+                await deleteObject(storageRef);
+                console.log('Old images removed from Firebase Storage');
+            }
+
+           
             const todoUpdated = { ...todo, imageUrl, timestamp: serverTimestamp() }
             updateDoc(docRef, todoUpdated)
             setTodo({title: '', detail: ''});
-            showAlert('info', `Todo with ID: ${todo.id} is updated successfully!`);  
+            showAlert('info', `Todo with ID: ${todo.id} is updated successfully!`);
 
         } 
         // add a new todo
