@@ -57,31 +57,33 @@ const ToDoForm = () => {
             2. If imageUrl is updated, remove the old imageUrl from Firebase Storage
             3. If no imageUrl is provided, set imageUrl to null
         */
+
+        
         if (todo?.hasOwnProperty('timestamp')) {
             // Fetch imageUrl from Firestore
             const docRef = doc(db, "todos", todo.id);
             const docSnap = await getDoc(docRef);
-            const { imageUrl: existingImageUrl } = docSnap.data();
-
-            // Call the uploadImage function here
-            const imageUrl = await uploadImage();
-
+            const { imageUrl: existingImageUrls } = docSnap.data(); 
             
-            // Check if new images are uploaded
-            if (existingImageUrl && imageUrl && existingImageUrl !== imageUrl) {
-                // Remove old images from Firebase Storage
-                const storageRef = ref(storage, existingImageUrl);
-                await deleteObject(storageRef);
-                console.log('Old images removed from Firebase Storage');
+            // Call the uploadImage function here
+            const newImageUrls = await uploadImage();
+            
+            // Remove old images from Firebase Storage if imageUrl is an array
+            if (Array.isArray(existingImageUrls) && existingImageUrls.length > 0) {
+                existingImageUrls.forEach(async (existingImageUrl) => {
+                    const storageRef = ref(storage, existingImageUrl);
+                    await deleteObject(storageRef);
+                    console.log('Old image removed from Firebase Storage:', existingImageUrl);
+                });
             }
-
-           
-            const todoUpdated = { ...todo, imageUrl, timestamp: serverTimestamp() }
+            
+            // Update the todo with new imageUrls
+            const todoUpdated = { ...todo, imageUrl: newImageUrls, timestamp: serverTimestamp() }
             updateDoc(docRef, todoUpdated)
             setTodo({title: '', detail: ''});
             showAlert('info', `Todo with ID: ${todo.id} is updated successfully!`);
+        }
 
-        } 
         // add a new todo
         else{
             // Call the uploadImage function here
