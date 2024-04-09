@@ -51,49 +51,41 @@ const ToDoForm = () => {
 
     
     const onSubmit = async () => {
-        // update the todo
-         /* Conditions
-            1. If imageUrl is not updated, keep the existing imageUrl
-            2. If imageUrl is updated, remove the old imageUrl from Firebase Storage
-            3. If no imageUrl is provided, set imageUrl to null
-        */
-
-        
         if (todo?.hasOwnProperty('timestamp')) {
             // Fetch imageUrl from Firestore
             const docRef = doc(db, "todos", todo.id);
             const docSnap = await getDoc(docRef);
-            const { imageUrl: existingImageUrls } = docSnap.data();  // Get existing imageUrls from Firestore
-            
+            const { imageUrl: existingImageUrls } = docSnap.data();
+    
             // Call the uploadImage function here
             const newImageUrls = await uploadImage();
-            
-            // Remove old images from Firebase Storage if imageUrl is an array
-            if (Array.isArray(existingImageUrls) && existingImageUrls.length > 0) {
+    
+            // If no new images were uploaded, keep the existing imageUrls
+            const updatedImageUrls = (newImageUrls && newImageUrls.length > 0) ? newImageUrls : existingImageUrls;
+    
+            // Remove old images from Firebase Storage if new images were uploaded
+            if (newImageUrls && newImageUrls.length > 0 && Array.isArray(existingImageUrls) && existingImageUrls.length > 0) {
                 existingImageUrls.forEach(async (existingImageUrl) => {
                     const storageRef = ref(storage, existingImageUrl);
                     await deleteObject(storageRef);
                     console.log('Old image removed from Firebase Storage:', existingImageUrl);
                 });
             }
-            
-            // Update the todo with new imageUrls
-            const todoUpdated = { ...todo, imageUrl: newImageUrls, timestamp: serverTimestamp() }
-            updateDoc(docRef, todoUpdated)
-            setTodo({title: '', detail: ''});
+    
+            // Update the todo with the updated imageUrls
+            const todoUpdated = { ...todo, imageUrl: updatedImageUrls, timestamp: serverTimestamp() };
+            updateDoc(docRef, todoUpdated);
+            setTodo({ title: '', detail: '' });
             showAlert('info', `Todo with ID: ${todo.id} is updated successfully!`);
-        }
-
-        // add a new todo
-        else{
+        } 
+        else {
             // Call the uploadImage function here
             const imageUrl = await uploadImage();
-            
-            const collectionRef = collection(db, "todos")
-            const docRef = await addDoc(collectionRef, { ...todo, imageUrl, timestamp: serverTimestamp() })
-            setTodo({title:'', detail:''})
-
-            showAlert('success',`Todo with ID: ${docRef.id} is added succesfully!`)
+    
+            const collectionRef = collection(db, "todos");
+            const docRef = await addDoc(collectionRef, { ...todo, imageUrl, timestamp: serverTimestamp() });
+            setTodo({ title: '', detail: '' });
+            showAlert('success', `Todo with ID: ${docRef.id} is added successfully!`);
         }
     }
 
