@@ -72,7 +72,7 @@ const ToDo = ({id, timestamp, title, detail, imageUrl}) => {
     >
       <ListItemText
         primary={title}
-        secondary={moment(timestamp).format('MMMM do, yyyy')}
+        secondary={moment(timestamp).format('MMMM Do, yyyy')}
       />
     </ListItem>
   )

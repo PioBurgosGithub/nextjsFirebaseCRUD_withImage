@@ -47,7 +47,7 @@ const ToDoForm = () => {
 
     //
 
-    const {showAlert, todo, setTodo} = useContext(TodoContext)
+    const {showAlert, todo, setTodo} = useContext(TodoContext) // Import showAlert and todo from TodoContext
 
     
     const onSubmit = async () => {
@@ -63,7 +63,7 @@ const ToDoForm = () => {
             // Fetch imageUrl from Firestore
             const docRef = doc(db, "todos", todo.id);
             const docSnap = await getDoc(docRef);
-            const { imageUrl: existingImageUrls } = docSnap.data(); 
+            const { imageUrl: existingImageUrls } = docSnap.data();  // Get existing imageUrls from Firestore
             
             // Call the uploadImage function here
             const newImageUrls = await uploadImage();
@@ -133,7 +133,7 @@ const ToDoForm = () => {
             <TextField fullWidth label="title" margin="normal"
                 value={todo.title}
                 onChange={e => setTodo({...todo, title:e.target.value})}
-            />
+            /> 
             <TextField fullWidth label="detail" multiline maxRows={4} 
                 value={todo.detail}
                 onChange={e => setTodo({...todo, detail:e.target.value})}
@@ -145,7 +145,7 @@ const ToDoForm = () => {
                     multiple
                     onChange={(event) => {
                         setImageUpload(event.target.files) // setImageUpload(event.target.files[0]) for single image upload
-                        setImagePreviews(Array.from(event.target.files).map(file => URL.createObjectURL(file)));
+                        setImagePreviews(Array.from(event.target.files).map(file => URL.createObjectURL(file))); 
                     }} 
                 />
                 
