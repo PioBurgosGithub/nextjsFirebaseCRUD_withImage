@@ -1,0 +1,222 @@
+"use client";
+import React, { useState, useContext, useRef, useEffect, createContext } from 'react';
+import { TextField, Button, IconButton, ListItem, ListItemText } from '@mui/material';
+import { addDoc, collection, serverTimestamp, updateDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { storage } from '../firebase';
+import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
+import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useRouter } from 'next/navigation';
+
+export const TodoContext = createContext(null);
+
+const TodoApp = () => {
+  const inputAreaRef = useRef();
+  const [imageUpload, setImageUpload] = useState(null);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [imageList, setImageList] = useState([]);
+  const imageListRef = ref(storage, 'images/');
+  const [todo, setTodo] = useState({ title: '', detail: '' });
+  const [todos, setTodos] = useState([]);
+  const router = useRouter();
+
+  const showAlert = (severity, message) => {
+    // Implement your alert logic here
+    console.log(`${severity}: ${message}`);
+  };
+
+  const uploadImage = async () => {
+    if (imageUpload == null) return null;
+
+    const urls = [];
+    for (let i = 0; i < imageUpload.length; i++) {
+      const imageRef = ref(storage, `images/${imageUpload[i].name + uuidv4()}`);
+      await uploadBytes(imageRef, imageUpload[i])
+        .then(() => {
+          console.log("success");
+        })
+        .catch((error) => {
+          console.log("error");
+        });
+
+      const url = await getDownloadURL(imageRef);
+      urls.push(url);
+    }
+
+    return urls;
+  };
+
+  const onSubmit = async () => {
+    if (todo?.hasOwnProperty('timestamp')) {
+      const docRef = doc(db, "todos", todo.id);
+      const docSnap = await getDoc(docRef);
+      const { imageUrl: existingImageUrls } = docSnap.data();
+
+      const newImageUrls = await uploadImage();
+      const updatedImageUrls = (newImageUrls && newImageUrls.length > 0) ? newImageUrls : existingImageUrls;
+
+      if (newImageUrls && newImageUrls.length > 0 && Array.isArray(existingImageUrls) && existingImageUrls.length > 0) {
+        existingImageUrls.forEach(async (existingImageUrl) => {
+          const storageRef = ref(storage, existingImageUrl);
+          await deleteObject(storageRef);
+          console.log('Old image removed from Firebase Storage:', existingImageUrl);
+        });
+      }
+
+      const todoUpdated = { ...todo, imageUrl: updatedImageUrls, timestamp: serverTimestamp() };
+      updateDoc(docRef, todoUpdated);
+      setTodo({ title: '', detail: '' });
+      showAlert('info', `Todo with ID: ${todo.id} is updated successfully!`);
+    } else {
+      const imageUrl = await uploadImage();
+      const collectionRef = collection(db, "todos");
+      const docRef = await addDoc(collectionRef, { ...todo, imageUrl, timestamp: serverTimestamp() });
+      setTodo({ title: '', detail: '' });
+      showAlert('success', `Todo with ID: ${docRef.id} is added successfully!`);
+    }
+  };
+
+  const deleteTodo = async (id, imageUrl, e) => {
+    e.stopPropagation();
+    if (imageUrl && imageUrl.length > 0) {
+      console.log("imageUrls:", imageUrl);
+      for (const url of imageUrl) {
+        const imageRef = ref(storage, url);
+        try {
+          await deleteObject(imageRef);
+          console.log(`Image deleted successfully: ${url}`);
+        } catch (error) {
+          console.error("Error deleting image from storage:", error);
+        }
+      }
+    }
+
+    const docRef = doc(db, "todos", id);
+    try {
+      await deleteDoc(docRef);
+      showAlert('error', `Todo with ID: ${id} is deleted successfully!`);
+    } catch (error) {
+      console.error("Error deleting todo from Firestore:", error);
+    }
+  };
+
+  const seeMore = (id, e) => {
+    e.stopPropagation();
+    router.push(`/todos/${id}`);
+  };
+
+  useEffect(() => {
+    const chekIfClickedOutside = (e) => {
+      if (!inputAreaRef.current.contains(e.target)) {
+        console.log('Outside input area');
+        setTodo({ title: '', detail: '' });
+      } else {
+        console.log('Inside input area');
+      }
+    };
+    document.addEventListener('mousedown', chekIfClickedOutside);
+
+    const collectionRef = collection(db, "todos");
+    const q = query(collectionRef, orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      setTodos(querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id, timestamp: doc.data().timestamp?.toDate().getTime() })));
+    });
+
+    listAll(imageListRef).then((response) => {
+      response.items.forEach((item) => {
+        getDownloadURL(item).then((url) => {
+          setImageList((prev) => [...prev, url]);
+        });
+      });
+    });
+
+    return () => {
+      document.removeEventListener('mousedown', chekIfClickedOutside);
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <TodoContext.Provider value={{ showAlert, todo, setTodo }}>
+      <div ref={inputAreaRef}>
+        <TextField
+          fullWidth
+          label="title"
+          margin="normal"
+          value={todo.title}
+          onChange={(e) => setTodo({ ...todo, title: e.target.value })}
+        />
+        <TextField
+          fullWidth
+          label="detail"
+          multiline
+          maxRows={4}
+          value={todo.detail}
+          onChange={(e) => setTodo({ ...todo, detail: e.target.value })}
+        />
+        <div>
+          <input
+            type="file"
+            multiple
+            onChange={(event) => {
+              setImageUpload(event.target.files);
+              setImagePreviews(Array.from(event.target.files).map((file) => URL.createObjectURL(file)));
+            }}
+          />
+          <div>
+            {todo.imageUrl && todo.imageUrl.map((url, index) => (
+              <img key={index} src={url} alt={`Saved image ${index}`} />
+            ))}
+          </div>
+        </div>
+        <Button onClick={onSubmit} sx={{ mt: 3 }}>
+          {todo.hasOwnProperty('timestamp') ? 'Update todo' : ' Add a new Todo'}
+        </Button>
+      </div>
+      <div>
+        {todos.map((todo) => (
+          <div key={todo.id}>
+            <ListItem
+              onClick={() => setTodo({ id: todo.id, title: todo.title, detail: todo.detail, timestamp: todo.timestamp })}
+              sx={{ mt: 3, boxShadow: 3 }}
+              style={{ backgroundColor: '#FAFAFA' }}
+              secondaryAction={
+                <>
+                  <IconButton onClick={(e) => deleteTodo(todo.id, todo.imageUrl, e)}>
+                    <DeleteIcon></DeleteIcon>
+                  </IconButton>
+                  <IconButton onClick={(e) => seeMore(todo.id, e)}>
+                    <MoreVertIcon></MoreVertIcon>
+		  </IconButton>
+		</>
+	}
+>
+
+
+<ListItemText
+	secondary={moment(todo.timestamp).format('MMMM Do, yyyy')}
+/>
+</ListItem>
+
+{Array.isArray(todo.imageUrl) ? (
+todo.imageUrl.map((url, index) => (
+  <div key={index}>
+  <img className="w-[300px] my-4" src={url} alt={${todo.title}-${index}} />
+  </div>
+  ))
+  ) : (
+  <div>
+    <img className="w-[300px] my-2.5" src={todo.imageUrl} alt={todo.title} />
+  </div>
+)}
+</div>
+    ))}
+</div>
+</TodoContext.Provider>
+);
+};
+
+export default TodoApp;

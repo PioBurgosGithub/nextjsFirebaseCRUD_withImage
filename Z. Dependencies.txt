@@ -13,3 +13,13 @@ npm i uuid
 npm install -g firebase-tools
 firebase login
 firebase init
+
+
+//download firebase-tools for routing to work 
+
+
+
+Enter to confirm choices
+1. Storage
+2. Firestore
+3. Hosting Both 
